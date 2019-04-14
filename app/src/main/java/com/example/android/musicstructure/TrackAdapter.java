@@ -13,35 +13,52 @@ import java.util.ArrayList;
 public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder> {
 
     private ArrayList<TrackInfo> mTrackList = new ArrayList<>();
-    private LayoutInflater mLayoutInflater;
+    private OnClickListener mListener;
 
-    public TrackAdapter(Context context, ArrayList<TrackInfo> trackList) {
-        mLayoutInflater = LayoutInflater.from(context);
+    public TrackAdapter(ArrayList<TrackInfo> trackList) {
         mTrackList = trackList;
     }
 
-    class TrackViewHolder extends RecyclerView.ViewHolder {
+    public interface OnClickListener{
+        void onItemClick(int position);
+    }
+
+    public void setOnItemClickListener(OnClickListener listener){
+        mListener = listener;
+    }
+
+    static class TrackViewHolder extends RecyclerView.ViewHolder {
         public final TextView artistName;
         public final TextView trackTitle;
-        final TrackAdapter mTrackAdapter;
 
-        public TrackViewHolder(View itemView, TrackAdapter trackAdapter) {
+        public TrackViewHolder(View itemView, final OnClickListener listener) {
             super(itemView);
             artistName = itemView.findViewById(R.id.artist_name_text_view);
             trackTitle = itemView.findViewById(R.id.track_name_text_view);
-            mTrackAdapter = trackAdapter;
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(listener!=null){
+                        int position = getAdapterPosition();
+                        if(position!=RecyclerView.NO_POSITION){
+                            listener.onItemClick(position);
+                        }
+                    }
+                }
+            });
         }
     }
 
     @NonNull
     @Override
-    public TrackAdapter.TrackViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View mItemView = mLayoutInflater.inflate(R.layout.template_layout, viewGroup, false);
-        return new TrackViewHolder(mItemView, this);
+    public TrackAdapter.TrackViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, final int i) {
+        View mItemView = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.template_layout, viewGroup, false);
+        return new TrackViewHolder(mItemView, mListener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull TrackAdapter.TrackViewHolder trackViewHolder, int i) {
+    public void onBindViewHolder(@NonNull final TrackAdapter.TrackViewHolder trackViewHolder, int i) {
         trackViewHolder.trackTitle.setText(mTrackList.get(i).getTrackTitle());
         trackViewHolder.artistName.setText(mTrackList.get(i).getArtistName());
 

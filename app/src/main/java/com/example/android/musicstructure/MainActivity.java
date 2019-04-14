@@ -1,6 +1,10 @@
 package com.example.android.musicstructure;
 
+import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,11 +15,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
+import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -24,6 +32,45 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private TrackAdapter mTrackAdapter;
     private ArrayList<TrackInfo> trackList = new ArrayList<>();
+    private MediaPlayer mMediaPlayer;
+
+    //handles audio focus
+    private AudioManager mAudioManager;
+
+    //audio focus listener when audio focus changes
+    private AudioManager.OnAudioFocusChangeListener audioFocusListener = new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int i) {
+            if(i==AudioManager.AUDIOFOCUS_GAIN){
+                mMediaPlayer.start();
+            }
+            else if(i==AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || i==AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
+                mMediaPlayer.pause();
+            }
+            else if(i==AudioManager.AUDIOFOCUS_LOSS){
+                releaseMediaPlayer();
+            }
+        }
+    };
+
+    //handle any error while playing audio
+    private MediaPlayer.OnErrorListener mediaErrorListener = new MediaPlayer.OnErrorListener() {
+        @Override
+        public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+            Toast.makeText(MainActivity.this, "Media play failed", Toast.LENGTH_SHORT).show();
+            releaseMediaPlayer();
+            return true;
+        }
+    };
+
+    //handle audio focus when media has completed playing
+    private MediaPlayer.OnCompletionListener mediaCompleteListener = new MediaPlayer.OnCompletionListener() {
+        @Override
+        public void onCompletion(MediaPlayer mediaPlayer) {
+            releaseMediaPlayer();
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         final FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -53,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView = findViewById(R.id.recycler_view);
 
         //create the adapter to supply data to recycler view
-        mTrackAdapter = new TrackAdapter(this, trackList);
+        mTrackAdapter = new TrackAdapter(trackList);
 
         //attach the adapter to the recycler view
         mRecyclerView.setAdapter(mTrackAdapter);
@@ -73,6 +122,51 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
+        //handle item click listener
+        mTrackAdapter.setOnItemClickListener(new TrackAdapter.OnClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                //request audio focus
+                int requestFocus = mAudioManager.requestAudioFocus(audioFocusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
+                //play the music if the request was successful
+                if(requestFocus==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
+
+                    //stop the media player if it is playing
+                    if(mMediaPlayer!=null && mMediaPlayer.isPlaying()){
+                        mMediaPlayer.stop();
+                        mMediaPlayer.reset();
+                    }
+
+
+                    //play the track or show playback failed message
+                    try{
+                        mMediaPlayer = new MediaPlayer();
+                        mMediaPlayer.setOnErrorListener(mediaErrorListener);
+                        mMediaPlayer.setDataSource(trackList.get(position).getTrackURL());
+                        mMediaPlayer.prepare();
+                        mMediaPlayer.start();
+                        mMediaPlayer.setOnCompletionListener(mediaCompleteListener);
+                    } catch(IOException exception){
+                        Toast.makeText(MainActivity.this, "Failed to play music", Toast.LENGTH_SHORT).show();
+                        releaseMediaPlayer();
+                    } catch(IllegalArgumentException illegalException){
+                        Toast.makeText(MainActivity.this, "Failed to play music", Toast.LENGTH_SHORT).show();
+                        releaseMediaPlayer();
+                    }
+                }
+            }
+        });
+
+    }
+
+    //release media player when activity is destroyed
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        releaseMediaPlayer();
     }
 
     @Override
@@ -82,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    //take user to the app's github page when the option is selected
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -96,6 +191,15 @@ public class MainActivity extends AppCompatActivity {
 
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    //release the media player and abandon audio focus
+    private void releaseMediaPlayer(){
+        if(mMediaPlayer!=null){
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+            mAudioManager.abandonAudioFocus(audioFocusListener);
         }
     }
 }
