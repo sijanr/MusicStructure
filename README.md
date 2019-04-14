@@ -14,6 +14,7 @@ Import the project in Android Studio and compile and run it on an android device
 
 ## APIs used
 * [MediaPlayer](https://developer.android.com/reference/android/media/MediaPlayer) - Used to play tracks
+* [AudioManager](https://developer.android.com/reference/android/media/AudioManager) - Handle audio focus
 
 ## Authors
 * [Sijan Rijal](https://github.com/sijanr)
