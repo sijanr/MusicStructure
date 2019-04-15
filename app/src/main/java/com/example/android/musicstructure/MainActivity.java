@@ -41,13 +41,11 @@ public class MainActivity extends AppCompatActivity {
     private AudioManager.OnAudioFocusChangeListener audioFocusListener = new AudioManager.OnAudioFocusChangeListener() {
         @Override
         public void onAudioFocusChange(int i) {
-            if(i==AudioManager.AUDIOFOCUS_GAIN){
+            if (i == AudioManager.AUDIOFOCUS_GAIN) {
                 mMediaPlayer.start();
-            }
-            else if(i==AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || i==AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
+            } else if (i == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || i == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
                 mMediaPlayer.pause();
-            }
-            else if(i==AudioManager.AUDIOFOCUS_LOSS){
+            } else if (i == AudioManager.AUDIOFOCUS_LOSS) {
                 releaseMediaPlayer();
             }
         }
@@ -57,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer.OnErrorListener mediaErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-            Toast.makeText(MainActivity.this, "Media play failed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "Play failed! Check your network connection and try again", Toast.LENGTH_LONG).show();
             releaseMediaPlayer();
             return true;
         }
@@ -68,6 +66,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCompletion(MediaPlayer mediaPlayer) {
             releaseMediaPlayer();
+        }
+    };
+
+    //notify when the media is prepared
+    private MediaPlayer.OnPreparedListener preparedListener = new MediaPlayer.OnPreparedListener() {
+        @Override
+        public void onPrepared(MediaPlayer mediaPlayer) {
+                mediaPlayer.start();
         }
     };
 
@@ -123,39 +129,38 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
         //handle item click listener
         mTrackAdapter.setOnItemClickListener(new TrackAdapter.OnClickListener() {
             @Override
             public void onItemClick(int position) {
                 //request audio focus
                 int requestFocus = mAudioManager.requestAudioFocus(audioFocusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-
                 //play the music if the request was successful
-                if(requestFocus==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
+                if (requestFocus == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
 
                     //stop the media player if it is playing
-                    if(mMediaPlayer!=null && mMediaPlayer.isPlaying()){
+                    if (mMediaPlayer != null) {
                         mMediaPlayer.stop();
-                        mMediaPlayer.reset();
+                        mMediaPlayer.release();
                     }
 
 
-                    //play the track or show playback failed message
-                    try{
-                        mMediaPlayer = new MediaPlayer();
-                        mMediaPlayer.setOnErrorListener(mediaErrorListener);
+                    mMediaPlayer = new MediaPlayer();
+                    mMediaPlayer.setOnErrorListener(mediaErrorListener);
+                    mMediaPlayer.setOnPreparedListener(preparedListener);
+                    //play the track or show play failed message
+                    try {
                         mMediaPlayer.setDataSource(trackList.get(position).getTrackURL());
-                        mMediaPlayer.prepare();
-                        mMediaPlayer.start();
-                        mMediaPlayer.setOnCompletionListener(mediaCompleteListener);
-                    } catch(IOException exception){
-                        Toast.makeText(MainActivity.this, "Failed to play music", Toast.LENGTH_SHORT).show();
+                    } catch (IOException exception) {
+                        Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
                         releaseMediaPlayer();
-                    } catch(IllegalArgumentException illegalException){
-                        Toast.makeText(MainActivity.this, "Failed to play music", Toast.LENGTH_SHORT).show();
+                    } catch (IllegalArgumentException illegalException) {
+                        Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
                         releaseMediaPlayer();
                     }
+
+                    mMediaPlayer.prepareAsync();
+                    mMediaPlayer.setOnCompletionListener(mediaCompleteListener);
                 }
             }
         });
@@ -195,8 +200,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //release the media player and abandon audio focus
-    private void releaseMediaPlayer(){
-        if(mMediaPlayer!=null){
+    private void releaseMediaPlayer() {
+        if (mMediaPlayer != null) {
             mMediaPlayer.release();
             mMediaPlayer = null;
             mAudioManager.abandonAudioFocus(audioFocusListener);
