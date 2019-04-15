@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -19,8 +20,9 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         mTrackList = trackList;
     }
 
+    //recycler view item click listener interface
     public interface OnClickListener {
-        void onItemClick(int position);
+        void onItemClick(int position, ImageView itemView);
     }
 
     public void setOnItemClickListener(OnClickListener listener) {
@@ -30,19 +32,22 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     static class TrackViewHolder extends RecyclerView.ViewHolder {
         public final TextView artistName;
         public final TextView trackTitle;
+        public ImageView playPause;
 
-        public TrackViewHolder(View itemView, final OnClickListener listener) {
+        public TrackViewHolder(final View itemView, final OnClickListener listener) {
             super(itemView);
             artistName = itemView.findViewById(R.id.artist_name_text_view);
             trackTitle = itemView.findViewById(R.id.track_name_text_view);
+            playPause = itemView.findViewById(R.id.play_button_image_view);
 
+            //handle view click
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if (listener != null) {
                         int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            listener.onItemClick(position);
+                            listener.onItemClick(position, playPause);
                         }
                     }
                 }

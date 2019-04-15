@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -33,6 +34,12 @@ public class MainActivity extends AppCompatActivity {
     private TrackAdapter mTrackAdapter;
     private ArrayList<TrackInfo> trackList = new ArrayList<>();
     private MediaPlayer mMediaPlayer;
+
+    //current play/pause image view
+    private ImageView currentView;
+
+    //current position of the recycler view item
+    private int currentPosition = -1;
 
     //handles audio focus
     private AudioManager mAudioManager;
@@ -73,7 +80,8 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer.OnPreparedListener preparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mediaPlayer) {
-                mediaPlayer.start();
+            currentView.setImageResource(R.drawable.ic_pause_button);
+            mediaPlayer.start();
         }
     };
 
@@ -132,35 +140,54 @@ public class MainActivity extends AppCompatActivity {
         //handle item click listener
         mTrackAdapter.setOnItemClickListener(new TrackAdapter.OnClickListener() {
             @Override
-            public void onItemClick(int position) {
-                //request audio focus
-                int requestFocus = mAudioManager.requestAudioFocus(audioFocusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-                //play the music if the request was successful
-                if (requestFocus == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            public void onItemClick(int position, ImageView itemView) {
 
-                    //stop the media player if it is playing
+                //pause and play the selected track
+                if (mMediaPlayer != null && currentPosition == position) {
+                    if (mMediaPlayer.isPlaying()) {
+                        mMediaPlayer.pause();
+                        mAudioManager.abandonAudioFocus(audioFocusListener);
+                        currentView.setImageResource(R.drawable.ic_play_button);
+                    } else {
+                        //request audio focus
+                        int requestFocus = mAudioManager.requestAudioFocus(audioFocusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                        //play the music if the request was successful
+                        if (requestFocus == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                            currentView.setImageResource(R.drawable.ic_pause_button);
+                            mMediaPlayer.start();
+                        }
+                    }
+                }
+
+                //play a new track
+                else {
                     if (mMediaPlayer != null) {
                         mMediaPlayer.stop();
-                        mMediaPlayer.release();
-                    }
-
-
-                    mMediaPlayer = new MediaPlayer();
-                    mMediaPlayer.setOnErrorListener(mediaErrorListener);
-                    mMediaPlayer.setOnPreparedListener(preparedListener);
-                    //play the track or show play failed message
-                    try {
-                        mMediaPlayer.setDataSource(trackList.get(position).getTrackURL());
-                    } catch (IOException exception) {
-                        Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
-                        releaseMediaPlayer();
-                    } catch (IllegalArgumentException illegalException) {
-                        Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
                         releaseMediaPlayer();
                     }
+                    currentView = itemView;
+                    currentPosition = position;
+                    //request audio focus
+                    int requestFocus = mAudioManager.requestAudioFocus(audioFocusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                    //play the music if the request was successful
+                    if (requestFocus == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                        mMediaPlayer = new MediaPlayer();
+                        mMediaPlayer.setOnErrorListener(mediaErrorListener);
+                        mMediaPlayer.setOnPreparedListener(preparedListener);
+                        //play the track or show play failed message
+                        try {
+                            mMediaPlayer.setDataSource(trackList.get(position).getTrackURL());
+                        } catch (IOException exception) {
+                            Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
+                            releaseMediaPlayer();
+                        } catch (IllegalArgumentException illegalException) {
+                            Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
+                            releaseMediaPlayer();
+                        }
 
-                    mMediaPlayer.prepareAsync();
-                    mMediaPlayer.setOnCompletionListener(mediaCompleteListener);
+                        mMediaPlayer.prepareAsync();
+                        mMediaPlayer.setOnCompletionListener(mediaCompleteListener);
+                    }
                 }
             }
         });
@@ -201,6 +228,7 @@ public class MainActivity extends AppCompatActivity {
 
     //release the media player and abandon audio focus
     private void releaseMediaPlayer() {
+        currentView.setImageResource(R.drawable.ic_play_button);
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
             mMediaPlayer = null;
