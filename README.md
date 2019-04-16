@@ -16,6 +16,15 @@ Import the project in Android Studio and compile and run it on an android device
 * [MediaPlayer](https://developer.android.com/reference/android/media/MediaPlayer) - Used to play tracks
 * [AudioManager](https://developer.android.com/reference/android/media/AudioManager) - Handle audio focus
 
+## Tracks
+I do not own the tracks present in the application. I have used some the tracks from the following artists:
+* [Broke For Free](http://freemusicarchive.org/music/Broke_For_Free/)
+* [Tours](http://freemusicarchive.org/music/Tours/)
+* [The Kyoto Connection](http://freemusicarchive.org/music/The_Kyoto_Connection/)
+* [Podington Bear](http://freemusicarchive.org/music/Podington_Bear/)
+* [Scott Holmes](http://freemusicarchive.org/music/Scott_Holmes/)
+* [Nctrnm](http://freemusicarchive.org/music/Nctrnm/)
+
 ## Authors
 * [Sijan Rijal](https://github.com/sijanr)
 
