@@ -2,38 +2,35 @@ package com.example.android.musicstructure;
 
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioAttributes;
-import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mRecyclerView;
     private TrackAdapter mTrackAdapter;
-    private ArrayList<TrackInfo> trackList = new ArrayList<>();
+    private ArrayList<TrackInfo> mTrackList = new ArrayList<>();
     private MediaPlayer mMediaPlayer;
+    private String mTrackTitle;
+    private String mTrackAuthor;
 
     //current play/pause image view
     private ImageView currentView;
@@ -95,28 +92,37 @@ public class MainActivity extends AppCompatActivity {
 
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
+        //share the current track info when like is clicked
         final FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Glad you liked it!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                if (mTrackAuthor != null && mTrackTitle != null) {
+                    String shareText = "Listening '" + mTrackTitle + "' by '" + mTrackAuthor + "'";
+                    ShareCompat.IntentBuilder.from(MainActivity.this)
+                            .setType("text/plain")
+                            .setChooserTitle("Share the track info with")
+                            .setText(shareText)
+                            .startChooser();
+                } else {
+                    Toast.makeText(MainActivity.this, "Select a track first to share", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         //add tracks to the list
-        trackList.add(new TrackInfo("Broke For Free", "Night Owl", "https://freemusicarchive.org/file/music/WFMU/Broke_For_Free/Directionless_EP/Broke_For_Free_-_01_-_Night_Owl.mp3"));
-        trackList.add(new TrackInfo("Tours", "Enthusiast", "https://freemusicarchive.org/file/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3"));
-        trackList.add(new TrackInfo("The Kyoto", "Hachiko", "https://freemusicarchive.org/file/music/ccCommunity/The_Kyoto_Connection/Wake_Up/The_Kyoto_Connection_-_09_-_Hachiko_The_Faithtful_Dog.mp3"));
-        trackList.add(new TrackInfo("Podington Bear", "Starling", "https://freemusicarchive.org/file/music/Music_for_Video/Podington_Bear/Solo_Instruments/Podington_Bear_-_Starling.mp3"));
-        trackList.add(new TrackInfo("Scott Holmes", "Hopeful Journey", "https://freemusicarchive.org/file/music/no_curator/Scott_Holmes/Corporate__Motivational_Music_2/Scott_Holmes_-_02_-_Hopeful_Journey.mp3"));
-        trackList.add(new TrackInfo("Nctrnm", "XY", "https://freemusicarchive.org/file/music/ccCommunity/Nctrnm/N3/Nctrnm_-_01_-_XY.mp3"));
-        trackList.add(new TrackInfo("Scott Holmes", "Together We Stand", "https://freemusicarchive.org/file/music/no_curator/Scott_Holmes/Documentary__TV_series/Scott_Holmes_-_02_-_Together_We_Stand.mp3"));
+        mTrackList.add(new TrackInfo("Broke For Free", "Night Owl", "https://freemusicarchive.org/file/music/WFMU/Broke_For_Free/Directionless_EP/Broke_For_Free_-_01_-_Night_Owl.mp3"));
+        mTrackList.add(new TrackInfo("Tours", "Enthusiast", "https://freemusicarchive.org/file/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3"));
+        mTrackList.add(new TrackInfo("The Kyoto", "Hachiko", "https://freemusicarchive.org/file/music/ccCommunity/The_Kyoto_Connection/Wake_Up/The_Kyoto_Connection_-_09_-_Hachiko_The_Faithtful_Dog.mp3"));
+        mTrackList.add(new TrackInfo("Podington Bear", "Starling", "https://freemusicarchive.org/file/music/Music_for_Video/Podington_Bear/Solo_Instruments/Podington_Bear_-_Starling.mp3"));
+        mTrackList.add(new TrackInfo("Scott Holmes", "Hopeful Journey", "https://freemusicarchive.org/file/music/no_curator/Scott_Holmes/Corporate__Motivational_Music_2/Scott_Holmes_-_02_-_Hopeful_Journey.mp3"));
+        mTrackList.add(new TrackInfo("Nctrnm", "XY", "https://freemusicarchive.org/file/music/ccCommunity/Nctrnm/N3/Nctrnm_-_01_-_XY.mp3"));
+        mTrackList.add(new TrackInfo("Scott Holmes", "Together We Stand", "https://freemusicarchive.org/file/music/no_curator/Scott_Holmes/Documentary__TV_series/Scott_Holmes_-_02_-_Together_We_Stand.mp3"));
         //get a handle to the recycler view
         mRecyclerView = findViewById(R.id.recycler_view);
 
         //create the adapter to supply data to recycler view
-        mTrackAdapter = new TrackAdapter(trackList);
+        mTrackAdapter = new TrackAdapter(mTrackList);
 
         //attach the adapter to the recycler view
         mRecyclerView.setAdapter(mTrackAdapter);
@@ -141,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
         mTrackAdapter.setOnItemClickListener(new TrackAdapter.OnClickListener() {
             @Override
             public void onItemClick(int position, ImageView itemView) {
-
                 //pause and play the selected track
                 if (mMediaPlayer != null && currentPosition == position) {
                     if (mMediaPlayer.isPlaying()) {
@@ -176,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                         mMediaPlayer.setOnPreparedListener(preparedListener);
                         //play the track or show play failed message
                         try {
-                            mMediaPlayer.setDataSource(trackList.get(position).getTrackURL());
+                            mMediaPlayer.setDataSource(mTrackList.get(position).getTrackURL());
                         } catch (IOException exception) {
                             Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
                             releaseMediaPlayer();
@@ -184,8 +189,9 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Check the URL and try again", Toast.LENGTH_SHORT).show();
                             releaseMediaPlayer();
                         }
-
                         mMediaPlayer.prepareAsync();
+                        mTrackAuthor = mTrackList.get(position).getArtistName();
+                        mTrackTitle = mTrackList.get(position).getTrackTitle();
                         mMediaPlayer.setOnCompletionListener(mediaCompleteListener);
                     }
                 }
