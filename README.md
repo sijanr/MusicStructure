@@ -12,6 +12,9 @@ Import the project in Android Studio and compile and run it on an android device
 * Android device or emulator running on at least Android 4.0.3
 * Internet Access
 
+## Screenshots
+<img src = "./screenshots/screen_1.png" width = "110">&nbsp; &nbsp; <img src = "./screenshots/screen_2.png" width="110">&nbsp; &nbsp; <img src = "./screenshots/screen_3.png" width="110">
+
 ## APIs used
 * [MediaPlayer](https://developer.android.com/reference/android/media/MediaPlayer) - Used to play tracks
 * [AudioManager](https://developer.android.com/reference/android/media/AudioManager) - Handle audio focus
