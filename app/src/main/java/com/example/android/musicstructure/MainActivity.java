@@ -3,11 +3,14 @@ package com.example.android.musicstructure;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -18,13 +21,53 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        final FloatingActionButton fab = findViewById(R.id.fab);
 
-        //add track list fragment
-        final TrackListFragment fragment = new TrackListFragment();
-        getSupportFragmentManager().beginTransaction().add(R.id.activity_main, fragment).commit();
+
+        // add viewpager to the activity
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+
+        //create an adapter for the viewpager
+        TrackPagerAdapter trackPagerAdapter = new TrackPagerAdapter(getSupportFragmentManager());
+
+        //set the adpater
+        viewPager.setAdapter(trackPagerAdapter);
+
+        // hide or show FAB as user scrolls through the pages
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int i, float v, int i1) {
+
+                switch (i) {
+                    case 0:
+                        fab.show();
+                        break;
+                    case 1:
+                        fab.hide();
+                        break;
+                    default:
+                        fab.show();
+                        break;
+                }
+
+            }
+
+            @Override
+            public void onPageSelected(int i) {
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int i) {
+
+            }
+        });
     }
 
 
+    /**
+     * Create the menu items for the app
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuInflater = getMenuInflater();
@@ -32,7 +75,9 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    //take user to the app's github page when the option is selected
+    /**
+     * Take user to the app's github page when the menu option is selected
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 

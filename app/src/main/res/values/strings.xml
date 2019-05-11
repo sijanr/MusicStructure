@@ -2,4 +2,9 @@
     <string name="app_name">MusicStructure</string>
     <string name="action_settings">Settings</string>
     <string name="menu_item1">Github Page</string>
+    <string name="page_1_title">TRACKS</string>
+    <string name="page_2_title">LIKES</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

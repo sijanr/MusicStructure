@@ -2,6 +2,7 @@ package com.example.android.musicstructure;
 
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -31,6 +33,11 @@ public class TrackListFragment extends Fragment {
     private MediaPlayer mMediaPlayer;
     private String mTrackTitle;
     private String mTrackAuthor;
+
+    //field to save track info for TrackLike fragment
+    private SharedPreferences sharedpreferences;
+    private final String MyPREFERENCES = "MyPrefs";
+
 
     //current play/pause image view
     private ImageView currentView;
@@ -84,7 +91,7 @@ public class TrackListFragment extends Fragment {
 
 
     public TrackListFragment() {
-        // Required empty public constructor
+
     }
 
 
@@ -97,6 +104,9 @@ public class TrackListFragment extends Fragment {
 
         final FloatingActionButton fab = getActivity().findViewById(R.id.fab);
 
+        sharedpreferences = getActivity().getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -108,6 +118,13 @@ public class TrackListFragment extends Fragment {
                             .setChooserTitle("Share the track info with")
                             .setText(shareText)
                             .startChooser();
+
+                    //save the current playing track info to send to the TrackLike fragment
+                    SharedPreferences.Editor editor = sharedpreferences.edit();
+                    editor.putString("TAG_NAME", mTrackTitle);
+                    editor.putString("TAG_ARTIST", mTrackAuthor);
+                    editor.commit();
+
                 } else {
                     Toast.makeText(getActivity(), "Select a track first to share", Toast.LENGTH_SHORT).show();
                 }
@@ -206,14 +223,18 @@ public class TrackListFragment extends Fragment {
         return rootView;
     }
 
-    //release media player when activity is destroyed
+    /**
+     * Release media player when activity is destroyed
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();
         releaseMediaPlayer();
     }
 
-    //release the media player and abandon audio focus
+    /**
+     * Release the media player and abandon audio focus
+     */
     private void releaseMediaPlayer() {
         currentView.setImageResource(R.drawable.ic_play_button);
         if (mMediaPlayer != null) {
