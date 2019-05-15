@@ -46,7 +46,7 @@ public class TrackPagerAdapter extends FragmentStatePagerAdapter {
             case 0:
                 return "TRACKS";
             case 1:
-                return "LIKES";
+                return "RECENTLY LIKED";
             default:
                 return null;
         }
