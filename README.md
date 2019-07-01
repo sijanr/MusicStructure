@@ -8,7 +8,7 @@ Import the project in Android Studio and compile and run it on an android device
 
 ### Prerequisites
 * Android Studio
-* Java SE Development Kit
+* Java Development Kit
 * Android device or emulator running on at least Android 4.0.3
 * Internet Access
 
